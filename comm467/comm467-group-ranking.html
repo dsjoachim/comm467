@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>COMM 467 — Group Story Ranking</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=UnifrakturMaguntia&family=Playfair+Display:wght@700;900&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;1,8..60,400&family=Source+Sans+3:wght@400;600;700&display=swap');
+
+:root {
+  --navy: #1a2a4a;
+  --gold: #b8962e;
+  --green: #2e6b3e;
+  --cream: #faf8f3;
+  --border: #ccc;
+  --gray: #777;
+  --danger: #b71c1c;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Source Serif 4', Georgia, serif; background: #ccc9c0; min-height: 100vh; }
+
+.page { max-width: 680px; margin: 28px auto 60px; background: var(--cream); box-shadow: 0 2px 20px rgba(0,0,0,.22); }
+
+/* NAMEPLATE */
+.nameplate { text-align: center; padding: 18px 32px 12px; border-bottom: 4px double var(--navy); }
+.np-over { font-family: 'Source Sans 3', sans-serif; font-size: 10px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--gray); margin-bottom: 5px; }
+.np-flag { font-family: 'UnifrakturMaguntia', cursive; font-size: 58px; line-height: 1; color: var(--navy); }
+.np-rule { border: none; border-top: 1px solid var(--border); margin: 7px 0; }
+.np-sub { font-family: 'Source Sans 3', sans-serif; font-size: 11px; color: var(--gray); }
+
+/* FORM BODY */
+.form-body { padding: 24px 32px 32px; }
+
+.form-intro { font-family: 'Source Sans 3', sans-serif; font-size: 13px; line-height: 1.65; color: #444; margin-bottom: 22px; padding: 12px 16px; background: #f0ede5; border-left: 4px solid var(--navy); border-radius: 2px; }
+
+/* GROUP SELECTOR */
+.group-row { display: flex; align-items: center; gap: 14px; margin-bottom: 26px; padding-bottom: 20px; border-bottom: 2px solid var(--navy); }
+.group-row label { font-family: 'Source Sans 3', sans-serif; font-size: 13px; font-weight: 700; color: var(--navy); white-space: nowrap; }
+.group-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+.group-btn {
+  font-family: 'Source Sans 3', sans-serif; font-size: 13px; font-weight: 600;
+  padding: 7px 18px; border: 2px solid var(--border); border-radius: 4px;
+  background: #fff; color: var(--navy); cursor: pointer; transition: all .12s;
+}
+.group-btn:hover { border-color: var(--navy); }
+.group-btn.selected { background: var(--navy); color: #fff; border-color: var(--navy); }
+
+/* SECTION HEADS */
+.section-head {
+  font-family: 'Source Sans 3', sans-serif; font-size: 10px; font-weight: 700;
+  letter-spacing: 3px; text-transform: uppercase; color: #fff;
+  padding: 7px 12px; border-radius: 3px; margin: 20px 0 12px;
+  display: flex; align-items: center; gap: 8px;
+}
+.section-head::before { content: ''; width: 4px; height: 16px; border-radius: 2px; background: rgba(255,255,255,.5); flex: none; }
+.sh-news    { background: var(--navy); }
+.sh-sports  { background: var(--green); }
+.sh-features{ background: var(--gold); }
+
+/* STORY ROWS */
+.story-row {
+  display: grid; grid-template-columns: 46px 1fr;
+  gap: 10px; align-items: start;
+  padding: 10px 0; border-bottom: 1px solid #e8e4db;
+}
+.story-row:last-child { border-bottom: none; }
+select.rank-sel {
+  font-family: 'Source Sans 3', sans-serif; font-size: 15px; font-weight: 700;
+  color: var(--navy); padding: 6px 4px; border: 2px solid var(--border);
+  border-radius: 4px; background: var(--cream); width: 46px;
+  cursor: pointer; text-align: center;
+}
+select.rank-sel:focus { outline: 2px solid var(--gold); border-color: var(--gold); }
+select.rank-sel.set { border-color: var(--navy); background: #fff; }
+.story-info { display: flex; flex-direction: column; gap: 2px; }
+.story-slug { font-family: 'Source Sans 3', sans-serif; font-size: 13px; font-weight: 700; color: var(--navy); }
+.story-desc { font-family: 'Source Sans 3', sans-serif; font-size: 12px; color: var(--gray); }
+
+/* HOMEPAGE DECISIONS */
+.hp-section { margin-top: 22px; padding-top: 20px; border-top: 2px solid var(--navy); }
+.hp-label { font-family: 'Source Sans 3', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--navy); margin-bottom: 4px; }
+.hp-sub { font-family: 'Source Sans 3', sans-serif; font-size: 12px; color: var(--gray); margin-bottom: 10px; }
+.hp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 6px; }
+.hp-rule { border: none; border-top: 1px solid var(--border); margin: 18px 0; }
+.cb-label, .rb-label {
+  display: flex; align-items: center; gap: 7px;
+  font-family: 'Source Sans 3', sans-serif; font-size: 12px;
+  cursor: pointer; padding: 5px 8px; border-radius: 3px;
+  border: 1px solid transparent; transition: all .12s;
+}
+.cb-label:hover, .rb-label:hover { background: #fff; border-color: var(--border); }
+.cb-label.on { background: #fff; border-color: var(--gold); font-weight: 700; }
+.rb-label.on { background: var(--navy); color: #fff; font-weight: 700; }
+input[type=checkbox], input[type=radio] { accent-color: var(--navy); width: 14px; height: 14px; }
+.photo-tally { font-family: 'Source Sans 3', sans-serif; font-size: 12px; color: var(--gray); margin-top: 6px; }
+.photo-tally.full { color: var(--green); font-weight: 700; }
+.photo-tally.over { color: var(--danger); font-weight: 700; }
+
+/* EXPLANATION */
+.expl-wrap { margin-top: 22px; padding-top: 18px; border-top: 2px solid var(--navy); }
+.expl-label { font-family: 'Source Sans 3', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--navy); margin-bottom: 8px; }
+textarea.expl-ta {
+  font-family: 'Source Serif 4', Georgia, serif; font-size: 14px; font-style: italic;
+  line-height: 1.6; color: #333; width: 100%; min-height: 90px;
+  border: 1px solid var(--border); border-radius: 4px; padding: 10px 12px;
+  background: #fff; resize: vertical; outline: none; transition: border-color .15s;
+}
+textarea.expl-ta:focus { border-color: var(--navy); background: #fffef8; }
+textarea.expl-ta::placeholder { color: #ccc; }
+
+/* DUPLICATE WARNING */
+#dup-warn { font-family: 'Source Sans 3', sans-serif; font-size: 12px; color: var(--danger); font-weight: 700; margin-top: 12px; display: none; }
+
+/* SUBMIT */
+.submit-row { margin-top: 24px; display: flex; align-items: center; gap: 14px; }
+button.submit-btn {
+  font-family: 'Source Sans 3', sans-serif; font-size: 14px; font-weight: 700;
+  padding: 11px 28px; background: var(--gold); color: #fff; border: none;
+  border-radius: 5px; cursor: pointer; transition: background .15s;
+}
+button.submit-btn:hover { background: #9a7d27; }
+button.submit-btn:disabled { background: #ccc; cursor: not-allowed; }
+#submit-msg { font-family: 'Source Sans 3', sans-serif; font-size: 13px; color: var(--gray); }
+#submit-msg.success { color: var(--green); font-weight: 700; }
+#submit-msg.error   { color: var(--danger); font-weight: 700; }
+
+/* CONFIRMATION SCREEN */
+#confirm-screen { display: none; padding: 32px; text-align: center; }
+#confirm-screen h2 { font-family: 'Playfair Display', serif; font-size: 28px; color: var(--navy); margin-bottom: 12px; }
+#confirm-screen p { font-family: 'Source Sans 3', sans-serif; font-size: 14px; color: var(--gray); line-height: 1.7; }
+#confirm-screen .confirm-group { font-family: 'Source Sans 3', sans-serif; font-size: 16px; font-weight: 700; color: var(--gold); margin: 8px 0 16px; }
+#confirm-ranking { margin: 20px auto; max-width: 320px; text-align: left; }
+#confirm-ranking table { width: 100%; border-collapse: collapse; font-family: 'Source Sans 3', sans-serif; font-size: 13px; }
+#confirm-ranking td { padding: 5px 10px; border-bottom: 1px solid var(--border); }
+#confirm-ranking td:first-child { font-weight: 700; color: var(--navy); width: 32px; text-align: center; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="nameplate">
+    <div class="np-over">Penn State University &middot; COMM 467 &middot; Story Budget Exercise</div>
+    <div class="np-flag">The 467 Chronicle</div>
+    <hr class="np-rule">
+    <div class="np-sub">Group Ranking Form &mdash; <span id="today"></span></div>
+  </div>
+
+  <div class="form-body" id="form-body">
+
+    <p class="form-intro">As a group, rank all nine stories by newsworthiness &mdash; 1 being the most urgent/important, 9 being the least. Each story must get a unique rank. Then write a brief overall explanation of your editorial reasoning before submitting.</p>
+
+    <!-- GROUP SELECTOR -->
+    <div class="group-row">
+      <label>Your group:</label>
+      <div class="group-btns">
+        <button class="group-btn" onclick="selectGroup(1)">Group 1</button>
+        <button class="group-btn" onclick="selectGroup(2)">Group 2</button>
+        <button class="group-btn" onclick="selectGroup(3)">Group 3</button>
+        <button class="group-btn" onclick="selectGroup(4)">Group 4</button>
+        <button class="group-btn" onclick="selectGroup(5)">Group 5</button>
+      </div>
+    </div>
+
+    <!-- NEWS -->
+    <div class="section-head sh-news">News</div>
+    <div id="stories-news"></div>
+
+    <!-- SPORTS -->
+    <div class="section-head sh-sports">Sports</div>
+    <div id="stories-sports"></div>
+
+    <!-- FEATURES -->
+    <div class="section-head sh-features">Features</div>
+    <div id="stories-features"></div>
+
+    <div id="dup-warn">&#9888; Two or more stories have the same rank &mdash; each rank must be unique (1&ndash;9).</div>
+
+    <!-- HOMEPAGE DECISIONS -->
+    <div class="hp-section">
+
+      <div class="hp-label">Which 5 stories get photos on the homepage?</div>
+      <p class="hp-sub">Check exactly five.</p>
+      <div class="hp-grid" id="photo-grid"></div>
+      <div class="photo-tally" id="photo-tally">0 of 5 selected</div>
+
+      <hr class="hp-rule">
+
+      <div class="hp-label">Top news lead</div>
+      <p class="hp-sub">The most urgent breaking story &mdash; drives the homepage.</p>
+      <div class="hp-grid" id="lead-grid"></div>
+
+      <hr class="hp-rule">
+
+      <div class="hp-label">Feature spot</div>
+      <p class="hp-sub">A human-interest story given a big photo &mdash; often not the hardest news.</p>
+      <div class="hp-grid" id="feat-grid"></div>
+
+    </div>
+
+    <!-- EXPLANATION -->
+    <div class="expl-wrap">
+      <div class="expl-label">Overall Editorial Reasoning</div>
+      <textarea class="expl-ta" id="expl" placeholder="In a sentence or two, explain your group&rsquo;s overall approach to ranking these stories&hellip;"></textarea>
+    </div>
+
+    <!-- SUBMIT -->
+    <div class="submit-row">
+      <button class="submit-btn" id="submit-btn" onclick="submitRanking()">Submit Group Ranking</button>
+      <span id="submit-msg"></span>
+    </div>
+
+  </div><!-- /form-body -->
+
+  <!-- CONFIRMATION -->
+  <div id="confirm-screen">
+    <h2>&#10003; Submitted!</h2>
+    <div class="confirm-group" id="confirm-group-name"></div>
+    <p>Your ranking has been recorded. Here&rsquo;s what you submitted:</p>
+    <div id="confirm-ranking"></div>
+    <p style="margin-top:16px;font-size:12px;color:#aaa">You can close this tab.</p>
+  </div>
+
+</div>
+
+<script>
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzIMFmYuKcolB6UIuOQ9DyZrT4RBszanITLxKgO6r-aYkvbr0hYqg3afnH-IPgchdv_bg/exec';
+
+const STORIES = {
+  news: [
+    { slug: 'STORM',   desc: 'Wind storm, central Pa.' },
+    { slug: 'FRATS',   desc: 'Two fraternities suspended' },
+    { slug: 'METZGAR', desc: 'Metzgar named Bellisario dean' },
+    { slug: 'FIRE',    desc: 'Halfmoon Township garage fire' },
+    { slug: 'CAMERAS', desc: 'Traffic cameras / State College' },
+  ],
+  sports: [
+    { slug: 'KAYTRON', desc: 'Kaytron Allen declares for NFL Draft' },
+    { slug: 'HOOPS',   desc: 'Lions break 70-year scoring record' },
+  ],
+  features: [
+    { slug: 'PREACHER', desc: 'Willard Preacher, 40-plus years' },
+    { slug: 'MOMS',     desc: '"Ask a Mom" at Penn State' },
+  ],
+};
+
+let selectedGroup = null;
+
+document.getElementById('today').textContent =
+  new Date().toLocaleDateString('en-US', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
+
+// Build story rows
+function buildSection(containerId, stories) {
+  const el = document.getElementById(containerId);
+  el.innerHTML = stories.map(s => `
+    <div class="story-row">
+      <select class="rank-sel" id="rank-${s.slug}" onchange="onRankChange(this)">
+        <option value="">—</option>
+        ${[1,2,3,4,5,6,7,8,9].map(n=>`<option value="${n}">${n}</option>`).join('')}
+      </select>
+      <div class="story-info">
+        <span class="story-slug">${s.slug}</span>
+        <span class="story-desc">${s.desc}</span>
+      </div>
+    </div>`).join('');
+}
+buildSection('stories-news',     STORIES.news);
+buildSection('stories-sports',   STORIES.sports);
+buildSection('stories-features', STORIES.features);
+
+// Build homepage decision grids
+const ALL_STORIES = [...STORIES.news, ...STORIES.sports, ...STORIES.features];
+function buildHPGrids() {
+  document.getElementById('photo-grid').innerHTML = ALL_STORIES.map(s=>`
+    <label class="cb-label" id="cbl-${s.slug}">
+      <input type="checkbox" id="cb-${s.slug}" onchange="setPhoto('${s.slug}',this.checked)">
+      <span><b>${s.slug}</b> — ${s.desc}</span>
+    </label>`).join('');
+  document.getElementById('lead-grid').innerHTML = ALL_STORIES.map(s=>`
+    <label class="rb-label" id="rbl-${s.slug}">
+      <input type="radio" name="lead" value="${s.slug}" onchange="setLead('${s.slug}')">
+      <span><b>${s.slug}</b></span>
+    </label>`).join('');
+  document.getElementById('feat-grid').innerHTML = ALL_STORIES.map(s=>`
+    <label class="rb-label" id="fbl-${s.slug}">
+      <input type="radio" name="feat" value="${s.slug}" onchange="setFeat('${s.slug}')">
+      <span><b>${s.slug}</b></span>
+    </label>`).join('');
+}
+buildHPGrids();
+
+let selectedPhotos = new Set();
+let selectedLead = null;
+let selectedFeat = null;
+
+function setPhoto(slug, on) {
+  if (on) selectedPhotos.add(slug); else selectedPhotos.delete(slug);
+  document.getElementById('cbl-'+slug).classList.toggle('on', on);
+  const n = selectedPhotos.size;
+  const el = document.getElementById('photo-tally');
+  el.textContent = n + ' of 5 selected';
+  el.className = 'photo-tally' + (n===5?' full':n>5?' over':'');
+  ALL_STORIES.forEach(s => {
+    const cb = document.getElementById('cb-'+s.slug);
+    cb.disabled = n >= 5 && !selectedPhotos.has(s.slug);
+  });
+}
+function setLead(slug) {
+  selectedLead = slug;
+  ALL_STORIES.forEach(s => document.getElementById('rbl-'+s.slug).classList.toggle('on', s.slug===slug));
+}
+function setFeat(slug) {
+  selectedFeat = slug;
+  ALL_STORIES.forEach(s => document.getElementById('fbl-'+s.slug).classList.toggle('on', s.slug===slug));
+}
+
+function selectGroup(n) {
+  selectedGroup = n;
+  document.querySelectorAll('.group-btn').forEach((b,i) =>
+    b.classList.toggle('selected', i+1 === n));
+}
+
+function onRankChange(sel) {
+  sel.classList.toggle('set', !!sel.value);
+  checkDuplicates();
+}
+
+function getAllRanks() {
+  const all = [...STORIES.news, ...STORIES.sports, ...STORIES.features];
+  return all.map(s => ({
+    slug: s.slug,
+    rank: document.getElementById('rank-'+s.slug).value
+  }));
+}
+
+function checkDuplicates() {
+  const ranks = getAllRanks().map(r => r.rank).filter(Boolean);
+  const hasDup = ranks.length !== new Set(ranks).size;
+  document.getElementById('dup-warn').style.display = hasDup ? 'block' : 'none';
+  return !hasDup;
+}
+
+function submitRanking() {
+  // Validate group
+  if (!selectedGroup) {
+    document.getElementById('submit-msg').textContent = 'Please select your group first.';
+    document.getElementById('submit-msg').className = 'error';
+    return;
+  }
+  // Validate all ranked
+  const ranks = getAllRanks();
+  const missing = ranks.filter(r => !r.rank);
+  if (missing.length > 0) {
+    document.getElementById('submit-msg').textContent =
+      `Please rank all stories — ${missing.map(r=>r.slug).join(', ')} ${missing.length===1?'is':'are'} missing.`;
+    document.getElementById('submit-msg').className = 'error';
+    return;
+  }
+  // Validate no duplicates
+  if (!checkDuplicates()) {
+    document.getElementById('submit-msg').textContent = 'Please fix duplicate rankings before submitting.';
+    document.getElementById('submit-msg').className = 'error';
+    return;
+  }
+
+  // Validate photos
+  if (selectedPhotos.size !== 5) {
+    document.getElementById('submit-msg').textContent = `Please select exactly 5 stories for photos — you have ${selectedPhotos.size}.`;
+    document.getElementById('submit-msg').className = 'error';
+    return;
+  }
+  if (!selectedLead) {
+    document.getElementById('submit-msg').textContent = 'Please select a top news lead.';
+    document.getElementById('submit-msg').className = 'error';
+    return;
+  }
+  if (!selectedFeat) {
+    document.getElementById('submit-msg').textContent = 'Please select a feature spot.';
+    document.getElementById('submit-msg').className = 'error';
+    return;
+  }
+
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = true;
+  document.getElementById('submit-msg').textContent = 'Submitting…';
+  document.getElementById('submit-msg').className = '';
+
+  // Build payload
+  const payload = {
+    group: `Group ${selectedGroup}`,
+    explanation: document.getElementById('expl').value.trim(),
+    photos: [...selectedPhotos],
+    lead: selectedLead,
+    feat: selectedFeat,
+  };
+  ranks.forEach(r => { payload[r.slug] = parseInt(r.rank); });
+
+  // Submit via fetch (no-cors for Apps Script)
+  fetch(SCRIPT_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  })
+  .then(() => showConfirmation(payload, ranks))
+  .catch(() => {
+    btn.disabled = false;
+    document.getElementById('submit-msg').textContent = 'Submission failed — please try again.';
+    document.getElementById('submit-msg').className = 'error';
+  });
+}
+
+function showConfirmation(payload, ranks) {
+  document.getElementById('form-body').style.display = 'none';
+  const cs = document.getElementById('confirm-screen');
+  cs.style.display = 'block';
+  document.getElementById('confirm-group-name').textContent = `Group ${selectedGroup}`;
+
+  // Sort by rank for display
+  const sorted = [...ranks].sort((a,b) => a.rank - b.rank);
+  const allStories = [...STORIES.news, ...STORIES.sports, ...STORIES.features];
+  const descMap = {};
+  allStories.forEach(s => descMap[s.slug] = s.desc);
+
+  document.getElementById('confirm-ranking').innerHTML = `
+    <table>
+      ${sorted.map(r=>`<tr><td>${r.rank}</td><td><b>${r.slug}</b> — ${descMap[r.slug]}</td></tr>`).join('')}
+    </table>
+    <div style="margin-top:14px;font-family:'Source Sans 3',sans-serif;font-size:12px;line-height:1.8;">
+      <p><b>Top news lead:</b> ${payload.lead}</p>
+      <p><b>Feature spot:</b> ${payload.feat}</p>
+      <p><b>Photos run:</b> ${payload.photos.join(', ')}</p>
+    </div>
+    ${payload.explanation ? `<p style="margin-top:12px;font-style:italic;font-size:12px;color:#666">"${payload.explanation}"</p>` : ''}
+  `;
+}
+</script>
+</body>
+</html>
