@@ -178,13 +178,6 @@ button.submit-btn:disabled { background: #ccc; cursor: not-allowed; }
     <!-- HOMEPAGE DECISIONS -->
     <div class="hp-section">
 
-      <div class="hp-label">Which 5 stories get photos on the homepage?</div>
-      <p class="hp-sub">Check exactly five.</p>
-      <div class="hp-grid" id="photo-grid"></div>
-      <div class="photo-tally" id="photo-tally">0 of 5 selected</div>
-
-      <hr class="hp-rule">
-
       <div class="hp-label">Top news lead</div>
       <p class="hp-sub">The most urgent breaking story &mdash; drives the homepage.</p>
       <div class="hp-grid" id="lead-grid"></div>
@@ -192,8 +185,15 @@ button.submit-btn:disabled { background: #ccc; cursor: not-allowed; }
       <hr class="hp-rule">
 
       <div class="hp-label">Feature spot</div>
-      <p class="hp-sub">A human-interest story given a big photo &mdash; often not the hardest news.</p>
+      <p class="hp-sub">A human-interest story given a prominent photo &mdash; often not the hardest news. This counts as one of your four homepage photos.</p>
       <div class="hp-grid" id="feat-grid"></div>
+
+      <hr class="hp-rule">
+
+      <div class="hp-label">3 additional stories with photos</div>
+      <p class="hp-sub">Choose three more stories that get photos on the homepage (your feature spot photo is already counted).</p>
+      <div class="hp-grid" id="photo-grid"></div>
+      <div class="photo-tally" id="photo-tally">0 of 3 selected</div>
 
     </div>
 
@@ -297,11 +297,11 @@ function setPhoto(slug, on) {
   document.getElementById('cbl-'+slug).classList.toggle('on', on);
   const n = selectedPhotos.size;
   const el = document.getElementById('photo-tally');
-  el.textContent = n + ' of 5 selected';
-  el.className = 'photo-tally' + (n===5?' full':n>5?' over':'');
+  el.textContent = n + ' of 3 selected';
+  el.className = 'photo-tally' + (n===3?' full':n>3?' over':'');
   ALL_STORIES.forEach(s => {
     const cb = document.getElementById('cb-'+s.slug);
-    cb.disabled = n >= 5 && !selectedPhotos.has(s.slug);
+    if (cb) cb.disabled = (n >= 3 && !selectedPhotos.has(s.slug)) || s.slug === selectedFeat;
   });
 }
 function setLead(slug) {
@@ -309,8 +309,27 @@ function setLead(slug) {
   ALL_STORIES.forEach(s => document.getElementById('rbl-'+s.slug).classList.toggle('on', s.slug===slug));
 }
 function setFeat(slug) {
+  if (selectedFeat) {
+    const oldCb = document.getElementById('cb-'+selectedFeat);
+    if (oldCb) { oldCb.disabled = false; }
+    if (selectedPhotos.has(selectedFeat)) {
+      selectedPhotos.delete(selectedFeat);
+      const oldCbl = document.getElementById('cbl-'+selectedFeat);
+      if (oldCbl) oldCbl.classList.remove('on');
+      const oldCbEl = document.getElementById('cb-'+selectedFeat);
+      if (oldCbEl) oldCbEl.checked = false;
+    }
+  }
   selectedFeat = slug;
   ALL_STORIES.forEach(s => document.getElementById('fbl-'+s.slug).classList.toggle('on', s.slug===slug));
+  const cb = document.getElementById('cb-'+slug);
+  if (cb) { cb.disabled = true; cb.checked = false; }
+  selectedPhotos.delete(slug);
+  document.getElementById('cbl-'+slug).classList.remove('on');
+  const n = selectedPhotos.size;
+  const el = document.getElementById('photo-tally');
+  el.textContent = n + ' of 3 selected';
+  el.className = 'photo-tally' + (n===3?' full':n>3?' over':'');
 }
 
 function selectGroup(n) {
@@ -363,8 +382,8 @@ function submitRanking() {
   }
 
   // Validate photos
-  if (selectedPhotos.size !== 5) {
-    document.getElementById('submit-msg').textContent = `Please select exactly 5 stories for photos — you have ${selectedPhotos.size}.`;
+  if (selectedPhotos.size !== 3) {
+    document.getElementById('submit-msg').textContent = `Please select exactly 3 additional stories for photos — you have ${selectedPhotos.size}.`;
     document.getElementById('submit-msg').className = 'error';
     return;
   }
@@ -428,7 +447,7 @@ function showConfirmation(payload, ranks) {
     <div style="margin-top:14px;font-family:'Source Sans 3',sans-serif;font-size:12px;line-height:1.8;">
       <p><b>Top news lead:</b> ${payload.lead}</p>
       <p><b>Feature spot:</b> ${payload.feat}</p>
-      <p><b>Photos run:</b> ${payload.photos.join(', ')}</p>
+      <p><b>Feature photo:</b> ${payload.feat}</p><p><b>Additional photos:</b> ${payload.photos.join(', ')}</p>
     </div>
     ${payload.explanation ? `<p style="margin-top:12px;font-style:italic;font-size:12px;color:#666">"${payload.explanation}"</p>` : ''}
   `;
