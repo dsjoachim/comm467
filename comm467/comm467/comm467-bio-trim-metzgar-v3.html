@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bio Trim Exercise — COMM 467 (Metzgar)</title>
+<link href="https://fonts.googleapis.com/css2?family=UnifrakturMaguntia&family=Playfair+Display:ital,wght@0,400;0,700;0,900&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink:#1a1008; --paper:#f5f0e8; --paper-dark:#ede7d9; --rule:#2a1f0f;
+    --gray:#888; --ok:#c8dfc0; --ok-text:#2d6a1f;
+    --too-long:#f5c6c6; --too-long-text:#a01010; --accent:#8b1a1a;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:#ccc9c0; font-family:"Source Serif 4",Georgia,serif; color:var(--ink); padding:40px 20px 80px; }
+  .page { background:var(--paper); max-width:820px; margin:0 auto; box-shadow:0 4px 32px rgba(0,0,0,0.35); padding:48px 56px 64px; position:relative; }
+  .page::before { content:""; position:absolute; top:0;left:0;right:0; height:6px; background:var(--rule); }
+  .nameplate { text-align:center; border-bottom:3px double var(--rule); padding-bottom:12px; margin-bottom:6px; }
+  .nameplate h1 { font-family:"UnifrakturMaguntia",cursive; font-size:3.4rem; line-height:1; }
+  .nameplate .kicker { font-family:"Courier Prime",monospace; font-size:0.7rem; letter-spacing:0.18em; color:var(--gray); text-transform:uppercase; margin-top:6px; }
+  .rule-double { border-top:1px solid var(--rule); border-bottom:1px solid var(--rule); height:4px; margin:8px 0 24px; }
+  .btn { font-family:"Courier Prime",monospace; font-size:0.7rem; letter-spacing:0.15em; text-transform:uppercase; padding:8px 20px; border:1.5px solid var(--rule); background:transparent; color:var(--ink); cursor:pointer; border-radius:2px; transition:background 0.15s,color 0.15s; }
+  .btn:hover { background:var(--rule); color:var(--paper); }
+  .btn.primary { background:var(--accent); border-color:var(--accent); color:white; }
+  .btn.primary:hover { background:#6a1010; }
+  .btn:disabled { opacity:0.4; cursor:not-allowed; background:var(--too-long); border-color:#c08080; color:white; }
+  .toolbar { display:flex; gap:10px; justify-content:center; margin-bottom:28px; flex-wrap:wrap; }
+  .how-it-works { background:var(--paper-dark); border:1px dashed #c8bfae; padding:12px 16px; margin-bottom:24px; font-size:0.78rem; line-height:1.6; color:#555; }
+  .how-it-works strong { color:var(--ink); }
+  .name-row { display:flex; align-items:center; gap:12px; margin-bottom:28px; padding-bottom:20px; border-bottom:1px solid #c8bfae; }
+  .name-row label { font-family:"Courier Prime",monospace; font-size:0.7rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--gray); white-space:nowrap; }
+  .name-input { flex:1; background:transparent; border:none; border-bottom:1.5px solid #b0a898; outline:none; font-family:"Source Serif 4",serif; font-size:1rem; color:var(--ink); padding:3px 0 5px; }
+  .name-input::placeholder { color:#bbb; font-style:italic; }
+
+  /* Assignment box */
+  .assignment { background:var(--paper-dark); border:1px solid #c8bfae; border-left:4px solid var(--accent); padding:18px 22px; margin-bottom:32px; font-size:0.85rem; line-height:1.7; }
+  .assignment h3 { font-family:"Courier Prime",monospace; font-size:0.68rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--accent); margin-bottom:10px; }
+
+  /* Word counter */
+  .word-counter-row { display:flex; align-items:center; gap:16px; margin-bottom:10px; flex-wrap:wrap; }
+  .word-counter { font-family:"Courier Prime",monospace; font-size:0.8rem; padding:6px 14px; border-radius:2px; background:var(--paper-dark); border:1px solid #c8bfae; transition:background 0.2s, color 0.2s; }
+  .word-counter.ok { background:var(--ok); color:var(--ok-text); font-weight:700; border-color:#8acc80; }
+  .word-counter.over { background:var(--too-long); color:var(--too-long-text); font-weight:700; border-color:#e08080; }
+  .word-limit-note { font-family:"Courier Prime",monospace; font-size:0.7rem; color:var(--gray); }
+  .over-warning { font-family:"Courier Prime",monospace; font-size:0.72rem; color:var(--too-long-text); display:none; }
+  .over-warning.show { display:block; }
+
+  /* Trim textarea */
+  .trim-label { font-family:"Courier Prime",monospace; font-size:0.65rem; letter-spacing:0.2em; text-transform:uppercase; color:var(--accent); margin-bottom:8px; display:flex; align-items:center; gap:10px; }
+  .trim-label::after { content:""; flex:1; height:1px; background:#c8bfae; }
+  .trim-hint { font-family:"Courier Prime",monospace; font-size:0.68rem; color:#aaa; margin-bottom:10px; line-height:1.5; }
+  .trim-body { width:100%; min-height:360px; background:#faf7f2; border:1px solid #d0c8bc; outline:none; font-family:"Source Serif 4",serif; font-size:0.9rem; line-height:1.8; color:var(--ink); padding:14px 16px; resize:vertical; border-radius:2px; transition:border-color 0.2s; }
+  .trim-body:focus { border-color:#b0a898; }
+  .trim-body.over { border-color:#e05050; background:#fff8f8; }
+  .trim-body::placeholder { color:#bbb; font-style:italic; }
+
+  /* Original bio */
+  .original-section { margin-top:40px; padding-top:28px; border-top:2px solid var(--rule); }
+  .original-label { font-family:"Courier Prime",monospace; font-size:0.65rem; letter-spacing:0.2em; text-transform:uppercase; color:var(--accent); margin-bottom:16px; display:flex; align-items:center; gap:10px; }
+  .original-label::after { content:""; flex:1; height:1px; background:#c8bfae; }
+  .original-text { font-size:0.88rem; line-height:1.8; color:#555; border-left:3px solid #d0c8bc; padding-left:16px; }
+  .original-text p { margin-bottom:0.9em; }
+  .original-text p:last-child { margin-bottom:0; }
+  .original-wordcount { font-family:"Courier Prime",monospace; font-size:0.68rem; color:#aaa; margin-top:12px; }
+
+  /* Timer */
+  .timer-bar { display:flex; align-items:center; gap:16px; background:var(--paper-dark); border:1px solid #c8bfae; border-top:none; padding:10px 18px; margin-bottom:24px; flex-wrap:wrap; position:sticky; top:0; z-index:50; box-shadow:0 2px 8px rgba(0,0,0,0.12); }
+  .timer-display { font-family:"Courier Prime",monospace; font-size:2rem; font-weight:700; color:var(--ink); letter-spacing:0.05em; min-width:90px; }
+  .timer-display.warn { color:#b86000; }
+  .timer-display.late { color:var(--too-long-text); }
+  .timer-label { font-family:"Courier Prime",monospace; font-size:0.68rem; text-transform:uppercase; letter-spacing:0.12em; color:var(--gray); }
+  .timer-select { font-family:"Courier Prime",monospace; font-size:0.75rem; padding:5px 10px; border:1.5px solid #b0a898; background:var(--paper); color:var(--ink); border-radius:2px; cursor:pointer; }
+  .timer-btn { font-family:"Courier Prime",monospace; font-size:0.7rem; letter-spacing:0.12em; text-transform:uppercase; padding:7px 16px; border:1.5px solid var(--rule); background:transparent; color:var(--ink); cursor:pointer; border-radius:2px; transition:background 0.15s,color 0.15s; white-space:nowrap; }
+  .timer-btn:hover { background:var(--rule); color:var(--paper); }
+  .timer-btn.running { background:#2d6a1f; border-color:#2d6a1f; color:white; }
+  .timer-btn.stopped { background:var(--accent); border-color:var(--accent); color:white; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  .timer-display.blink { animation:blink 1s infinite; }
+
+  /* Highlight toolbar */
+  .highlight-toolbar { display:flex; align-items:center; gap:8px; margin-bottom:12px; flex-wrap:wrap; position:sticky; top:90px; z-index:49; background:var(--paper); padding:8px 0 8px; border-bottom:1px solid #c8bfae; }
+  .highlight-toolbar .ht-label { font-family:"Courier Prime",monospace; font-size:0.65rem; text-transform:uppercase; letter-spacing:0.12em; color:var(--gray); margin-right:4px; }
+  .hl-btn { font-family:"Courier Prime",monospace; font-size:0.68rem; letter-spacing:0.1em; text-transform:uppercase; padding:5px 12px; border:1.5px solid #b0a898; background:transparent; color:var(--ink); cursor:pointer; border-radius:2px; transition:background 0.15s; }
+  .hl-btn.keep { border-color:#c8a000; }
+  .hl-btn.keep:hover { background:#fff3a0; }
+  .hl-btn.cut  { border-color:#c06080; }
+  .hl-btn.cut:hover  { background:#ffd0dc; }
+  .hl-btn.clear { border-color:#b0a898; }
+  .hl-btn.clear:hover { background:#e0d8cc; }
+
+  /* Highlight colors in bio text */
+  .hl-keep { background:#fff176; border-radius:2px; padding:0 1px; }
+  .hl-cut  { background:#ffc0cb; border-radius:2px; padding:0 1px; }
+
+  /* Late stamp in PDF preview */
+  .late-stamp { font-family:"Courier Prime",monospace; font-size:0.72rem; color:var(--too-long-text); font-weight:700; margin-top:8px; }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+<div class="page">
+
+  <div class="nameplate">
+    <h1>The Penn State Bulletin</h1>
+    <div class="kicker">COMM 467 &nbsp;·&nbsp; News Editing &nbsp;·&nbsp; Bio Trim Exercise</div>
+  </div>
+  <div class="rule-double"></div>
+
+  <div class="toolbar">
+    <button class="btn" onclick="clearAll()">↺ Clear All</button>
+    <button class="btn primary" id="submit-btn" onclick="openPreview()">Save PDF →</button>
+  </div>
+
+  <!-- TIMER -->
+  <div class="timer-bar">
+    <div>
+      <div class="timer-label">Timer</div>
+      <div class="timer-display" id="timer-display">—:——</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span class="timer-label">Set time:</span>
+        <select class="timer-select" id="timer-select">
+          <option value="5">5 min</option>
+          <option value="10">10 min</option>
+          <option value="15" selected>15 min</option>
+          <option value="20">20 min</option>
+          <option value="25">25 min</option>
+          <option value="30">30 min</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="timer-btn" id="timer-start-btn" onclick="startTimer()">▶ Start Timer</button>
+        <button class="timer-btn" id="timer-reset-btn" onclick="resetTimer()">↺ Reset</button>
+      </div>
+    </div>
+    <div id="late-stamp" class="late-stamp" style="display:none;"></div>
+  </div>
+
+  <div class="how-it-works">
+    <strong>How to submit:</strong> Type or paste your trimmed bio in the field below. Keep it at or under 175 words — the Submit button will be disabled if you go over. When finished, click <strong>Save PDF</strong>. The file will download directly to your <strong>Downloads folder</strong> and appear in your browser's download history. Upload it to Canvas.
+  </div>
+
+  <div class="name-row">
+    <label for="student-name">Your Name</label>
+    <input type="text" id="student-name" class="name-input" placeholder="First and last name…">
+  </div>
+
+  <div class="assignment">
+    <h3>Your Assignment</h3>
+    <p>The biography below runs 530 words. Trim it to <strong>no more than 175 words</strong>. Keep the most essential information. Cut ruthlessly. (Also fix any AP style, spelling, grammar and punctuation errors that you see.)</p>
+  </div>
+
+  <!-- TRIM FIELD -->
+  <div class="trim-label">Your trimmed biography</div>
+  <div class="trim-hint">Type or paste your trimmed version here. The word counter updates as you type.</div>
+  <div style="text-align:right;margin-bottom:10px;">
+    <button class="btn primary" onclick="openPreview()" style="font-size:0.7rem;">Save PDF →</button>
+  </div>
+
+  <div class="word-counter-row">
+    <div class="word-counter" id="word-counter">0 words</div>
+    <div class="word-limit-note">Limit: 175 words</div>
+    <div class="over-warning" id="over-warning">⚠ Over the limit — keep cutting before you can submit.</div>
+  </div>
+
+  <textarea class="trim-body" id="input-trim"
+    placeholder="Paste or type your trimmed biography here…"
+    oninput="updateWordCount()"></textarea>
+
+  <!-- ORIGINAL BIO -->
+  <div class="original-section">
+    <div class="original-label">Original biography (530 words)</div>
+    <div class="highlight-toolbar">
+      <span class="ht-label">Highlight:</span>
+      <button class="hl-btn keep" onclick="applyHighlight('keep')" title="Mark selected text as Keep">✓ Keep</button>
+      <button class="hl-btn cut"  onclick="applyHighlight('cut')"  title="Mark selected text as Cut">✗ Cut</button>
+      <button class="hl-btn clear" onclick="clearHighlights()" title="Remove all highlights">Clear All</button>
+
+    </div>
+    <div class="original-text" id="original-text">
+      <p>Emily T. Metzgar is the new dean of the Donald P. Bellisario College of Communications at Penn State University. Metzgar was previously the director of the School of Media and Journalism at Kent State University, providing leadership and oversight for more than 600 undergraduates, 30 specialized graduate students and nearly two dozen full-time faculty members. In this role, she guided a range of initiatives aimed at strengthening the school's academic environment and student success. Her leadership included efforts to increase student retention, review course offerings and prerequisites, develop new minors and certificates, modernize facilities, and create new channels for stakeholder communication. She also directed accreditation and assessment efforts; supervised the development of new courses and programs at the graduate and undergraduate level with an emphasis on AI-forward, student-first outcomes; and oversaw fundraising for the school.</p>
+      <p>Metzgar brings a broad professional perspective to her work in media education, with a career that has spanned diplomacy, policy analysis, journalism and academia. Prior to joining Kent State, Metzgar was a faculty member at The Media School at Indiana University from 2008 to 2020, serving as director of the school's honors program from 2015 to 2018 and director of undergraduate studies from 2018 to 2020. As director of undergraduate studies, Metzgar led all facets of undergraduate education for more than 2,000 students and drove curricular reform, launched new degrees and majors, and coordinated end-to-end course development.</p>
+      <p>Before embarking on her academic career, Metzgar was a blogger, podcaster, community columnist and contributing editor in Louisiana from 2002 to 2008. From 1997 to 1999 she was a foreign service officer for the U.S. Department of State in Washington, D.C., and China, serving at the U.S. Embassy in Beijing. She also analyzed East Asian political-military issues as a research assistant for the Institute for National Strategic Studies at the National Defense University in Washington, D.C., from 1996 to 1997.</p>
+      <p>Metzgar's scholarly research focuses on the intersection of media foreign policy and how shifts in the information environment shape public understanding of international affairs. She is the author of "The JET Program and the U.S.–Japan Relationship: Goodwill Goldmine" and co-editor of "The Course Reflection Project: Faculty Reflections on Teaching Service-Learning." Her current book project is titled "The American Narrative: U.S. Information Diplomacy Since World War II." Metzgar's research has appeared in journals such as the International Journal of Communication, Journalism Practice, New Media &amp; Society, and Political Communication, among others. Her commentary has appeared in such outlets as Columbia Journalism Review, USA Today, Los Angeles Times, and The Conversation.</p>
+      <p>She is actively involved in professional leadership and service within journalism and communication education. Metzgar is the immediate past president of the Association of Schools of Journalism and Mass Communication and recently completed a two-year term on the board of the Association for Education in Journalism and Mass Communication. She also serves as a site team member for the Accrediting Council on Education in Journalism and Mass Communications.</p>
+      <p>Metzgar holds a doctorate in media and public affairs from Louisiana State University, a master of arts degree in international politics from George Washington University, and a bachelor of arts degree in political science and French from the University of Michigan.</p>
+    </div>
+    <div style="margin-top:20px;padding-top:16px;border-top:1px solid #c8bfae;text-align:center;">
+      <div style="font-family:'Courier Prime',monospace;font-size:0.68rem;color:#888;margin-bottom:10px;">When you've finished marking, copy your selections to the trim field above.</div>
+      <button class="btn primary" onclick="copyKeepsToForm()" style="font-size:0.72rem;">⬆ Copy &#8220;Keeps&#8221; to Form</button>
+    </div>
+  </div>
+
+</div><!-- /page -->
+
+<script>
+function countWords(str) {
+  return str.trim() === "" ? 0 : str.trim().split(/\s+/).length;
+}
+
+function updateWordCount() {
+  const text  = document.getElementById("input-trim").value;
+  const count = countWords(text);
+  const over  = count > 175;
+  const counter = document.getElementById("word-counter");
+  const warning = document.getElementById("over-warning");
+  const textarea = document.getElementById("input-trim");
+  const btn = document.getElementById("submit-btn");
+
+  counter.textContent = count + (count === 1 ? " word" : " words");
+  counter.className = "word-counter" + (count === 0 ? "" : over ? " over" : " ok");
+  warning.classList.toggle("show", over);
+  textarea.classList.toggle("over", over);
+  btn.disabled = over || count === 0;
+}
+
+
+// ── Timer ─────────────────────────────────────────────────────
+let timerInterval = null;
+let timerSeconds = 0;
+let timerRunning = false;
+let timerStartTime = null;
+let timerDuration = 0;
+let timerExpired = false;
+let lateSeconds = 0;
+
+function formatTime(s) {
+  const m = Math.floor(Math.abs(s) / 60);
+  const sec = Math.abs(s) % 60;
+  return (s < 0 ? "-" : "") + String(m).padStart(2,"0") + ":" + String(sec).padStart(2,"0");
+}
+
+function startTimer() {
+  if (timerRunning) return;
+  timerDuration = parseInt(document.getElementById("timer-select").value) * 60;
+  timerSeconds = timerDuration;
+  timerRunning = true;
+  timerExpired = false;
+  lateSeconds = 0;
+  timerStartTime = Date.now();
+  document.getElementById("timer-start-btn").textContent = "⏱ Running…";
+  document.getElementById("timer-start-btn").className = "timer-btn running";
+  document.getElementById("timer-select").disabled = true;
+  document.getElementById("late-stamp").style.display = "none";
+
+  timerInterval = setInterval(function() {
+    const elapsed = Math.floor((Date.now() - timerStartTime) / 1000);
+    const remaining = timerDuration - elapsed;
+    const display = document.getElementById("timer-display");
+
+    if (remaining > 0) {
+      timerSeconds = remaining;
+      display.textContent = formatTime(remaining);
+      display.className = "timer-display" + (remaining <= 300 ? " warn" : "");
+    } else {
+      lateSeconds = Math.abs(remaining);
+      timerExpired = true;
+      display.textContent = formatTime(remaining);
+      display.className = "timer-display late blink";
+      if (remaining === 0) {
+        document.getElementById("timer-start-btn").textContent = "⏰ Time's up";
+        document.getElementById("timer-start-btn").className = "timer-btn stopped";
+      }
+    }
+  }, 500);
+}
+
+function resetTimer() {
+  clearInterval(timerInterval);
+  timerRunning = false;
+  timerExpired = false;
+  lateSeconds = 0;
+  const display = document.getElementById("timer-display");
+  display.textContent = "—:——";
+  display.className = "timer-display";
+  document.getElementById("timer-start-btn").textContent = "▶ Start Timer";
+  document.getElementById("timer-start-btn").className = "timer-btn";
+  document.getElementById("timer-select").disabled = false;
+  document.getElementById("late-stamp").style.display = "none";
+  clearHighlights();
+}
+
+// ── Highlighting ──────────────────────────────────────────────
+function applyHighlight(type) {
+  const container = document.getElementById("original-text");
+  const sel = window.getSelection();
+  if (!sel || sel.isCollapsed || !container.contains(sel.anchorNode)) return;
+
+  const range = sel.getRangeAt(0);
+  // Don't allow highlighting across paragraph boundaries — keep it simple
+  try {
+    const span = document.createElement("span");
+    span.className = type === "keep" ? "hl-keep" : "hl-cut";
+    range.surroundContents(span);
+  } catch(e) {
+    // Selection spans multiple nodes — extract and wrap
+    const frag = range.extractContents();
+    const span = document.createElement("span");
+    span.className = type === "keep" ? "hl-keep" : "hl-cut";
+    span.appendChild(frag);
+    range.insertNode(span);
+  }
+  sel.removeAllRanges();
+}
+
+function clearHighlights() {
+  const container = document.getElementById("original-text");
+  const spans = Array.from(container.querySelectorAll(".hl-keep, .hl-cut"));
+  spans.forEach(span => {
+    const parent = span.parentNode;
+    while (span.firstChild) parent.insertBefore(span.firstChild, span);
+    parent.removeChild(span);
+  });
+  container.normalize();
+}
+
+function copyKeepsToForm() {
+  const container = document.getElementById("original-text");
+  const keeps = container.querySelectorAll(".hl-keep");
+  if (keeps.length === 0) {
+    alert("No text marked as Keep yet. Select some text and click the Keep button first.");
+    return;
+  }
+  // Collect all keep text in document order
+  const parts = [];
+  keeps.forEach(span => {
+    const text = span.textContent.trim();
+    if (text) parts.push(text);
+  });
+  const combined = parts.join(" ");
+  const field = document.getElementById("input-trim");
+  // Append to existing text if there is any, otherwise just set
+  if (field.value.trim()) {
+    if (confirm("The trim field already has text. Replace it with your Keep selections, or cancel to keep what you have?")) {
+      field.value = combined;
+    }
+  } else {
+    field.value = combined;
+  }
+  updateWordCount();
+  // Scroll to the trim field
+  field.scrollIntoView({ behavior: "smooth", block: "center" });
+  field.focus();
+}
+
+function openPreview() {
+  const name  = document.getElementById("student-name").value.trim();
+  if (!name) {
+    alert("Please enter your name before saving.");
+    document.getElementById("student-name").focus();
+    return;
+  }
+  const trim  = document.getElementById("input-trim").value.trim();
+  const count = countWords(trim);
+  const now   = new Date();
+  const date  = now.toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"});
+  const time  = now.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"});
+
+  function esc(s) { return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+  const safeName = name.replace(/[^a-z0-9]/gi, '-').toLowerCase();
+  const filename = `comm467-bio-metzgar-${safeName}.pdf`;
+  const isLate = timerExpired && lateSeconds > 0;
+  const lateMin = Math.floor(lateSeconds / 60);
+  const lateSec = lateSeconds % 60;
+  const lateMsg = isLate
+    ? `LATE SUBMISSION — ${lateMin > 0 ? lateMin + " min " : ""}${lateSec} sec after deadline`
+    : null;
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'pt', format: 'letter' });
+  const margin = 72;
+  const pageW = doc.internal.pageSize.getWidth();
+  const maxW = pageW - margin * 2;
+  let y = margin;
+
+  // Header
+  doc.setFont('times', 'bold');
+  doc.setFontSize(22);
+  doc.text('The Penn State Bulletin', margin, y); y += 28;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(120);
+  doc.text('COMM 467  ·  Bio Trim Exercise', margin, y); y += 6;
+  doc.setDrawColor(40, 30, 15);
+  doc.setLineWidth(2);
+  doc.line(margin, y, pageW - margin, y); y += 12;
+  doc.setTextColor(0);
+
+  // Student info
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`Student: ${name}   ·   Submitted: ${date}, ${time}`, margin, y); y += 24;
+
+  // Section: Trimmed Bio
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
+  doc.setTextColor(139, 26, 26);
+  doc.text('TRIMMED BIOGRAPHY', margin, y); y += 4;
+  doc.setDrawColor(200, 191, 174);
+  doc.setLineWidth(0.5);
+  doc.line(margin, y, pageW - margin, y); y += 14;
+  doc.setTextColor(0);
+
+  // Bio text
+  doc.setFont('times', 'normal');
+  doc.setFontSize(11);
+  const lines = doc.splitTextToSize(trim, maxW);
+  doc.text(lines, margin, y);
+  y += lines.length * 14 + 8;
+
+  // Word count
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(120);
+  doc.text(`${count} words`, margin, y);
+  y += 16;
+  if (lateMsg) {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(160, 16, 16);
+    doc.text(lateMsg, margin, y);
+  }
+
+  doc.save(filename);
+}
+
+function clearAll() {
+  if (!confirm("Clear your work and start over?")) return;
+  document.getElementById("student-name").value = "";
+  document.getElementById("input-trim").value = "";
+  updateWordCount();
+}
+
+// Init
+updateWordCount();
+</script>
+</body>
+</html>

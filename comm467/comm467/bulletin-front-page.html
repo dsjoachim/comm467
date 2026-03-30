@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>The Penn State Bulletin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=UnifrakturMaguntia&family=Source+Serif+4:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Source+Sans+3:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --black: #111010;
+      --ink: #1a1a1a;
+      --rule: #222;
+      --mid: #555;
+      --light: #888;
+      --paper: #f5f0e8;
+      --accent: #8b0000;
+      --psu-blue: #1e407c;
+      --col-gap: 20px;
+      --edit-highlight: rgba(139, 0, 0, 0.06);
+      --edit-border: rgba(139, 0, 0, 0.25);
+    }
+
+    body {
+      background: var(--paper);
+      color: var(--ink);
+      font-family: 'Source Serif 4', Georgia, serif;
+      font-size: 16px;
+      line-height: 1.55;
+    }
+
+    a { color: inherit; text-decoration: none; }
+
+    /* ── TOOLBAR ── */
+    #toolbar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: var(--black);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 24px;
+      font-family: 'Source Sans 3', sans-serif;
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    #toolbar .toolbar-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    #toolbar .label {
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      font-size: 11px;
+      color: #aaa;
+    }
+    #toolbar button {
+      background: transparent;
+      border: 1px solid #555;
+      color: #fff;
+      padding: 5px 14px;
+      font-family: 'Source Sans 3', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    #toolbar button:hover { background: #333; border-color: #999; }
+    #toolbar .btn-save {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+    #toolbar .btn-save:hover { background: #a00000; }
+    #toolbar .btn-reset { border-color: #555; color: #aaa; }
+    #status { font-size: 11px; color: #888; font-style: italic; }
+
+    /* ── EDITABLE ELEMENTS ── */
+    [contenteditable="true"] {
+      outline: none;
+      border-radius: 2px;
+      transition: background 0.15s, box-shadow 0.15s;
+      cursor: text;
+    }
+    [contenteditable="true"]:hover {
+      background: var(--edit-highlight);
+      box-shadow: 0 0 0 2px var(--edit-border);
+    }
+    [contenteditable="true"]:focus {
+      background: rgba(255,255,255,0.7);
+      box-shadow: 0 0 0 2px var(--accent);
+    }
+
+    /* ── PAGE WRAPPER ── */
+    .page {
+      max-width: 1320px;
+      margin: 0 auto;
+      padding: 0 32px 60px;
+    }
+
+    /* ── TOP BAR ── */
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 3px solid var(--rule);
+      border-bottom: 1px solid var(--rule);
+      padding: 6px 0;
+      margin-top: 18px;
+      font-family: 'Source Sans 3', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--mid);
+    }
+    .top-bar nav { display: flex; gap: 0; }
+    .top-bar nav span { margin-left: 18px; color: var(--mid); }
+
+    /* ── NAMEPLATE ── */
+    .nameplate {
+      text-align: center;
+      padding: 22px 0 10px;
+      border-bottom: 1px solid var(--rule);
+    }
+    .nameplate h1 {
+      font-family: 'UnifrakturMaguntia', cursive;
+      font-size: clamp(52px, 9vw, 96px);
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      line-height: 1;
+      color: var(--psu-blue);
+    }
+    .nameplate .tagline {
+      font-family: 'Source Sans 3', sans-serif;
+      font-size: 12px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--mid);
+      margin-top: 6px;
+    }
+
+    /* ── DATE BAR ── */
+    .date-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 3px double var(--rule);
+      border-bottom: 3px double var(--rule);
+      padding: 5px 0;
+      margin: 8px 0 20px;
+      font-family: 'Source Sans 3', sans-serif;
+      font-size: 12px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--mid);
+    }
+
+    /* ── SECTION LABEL ── */
+    .section-label {
+      font-family: 'Source Sans 3', sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--paper);
+      background: var(--accent);
+      display: inline-block;
+      padding: 3px 9px;
+      margin-bottom: 14px;
+    }
+
+    /* ── FRONT GRID ── */
+    .front-grid {
+      display: grid;
+      grid-template-columns: 1.8fr 1px 1fr;
+      gap: 0 var(--col-gap);
+      align-items: start;
+    }
+    .col-divider {
+      background: var(--rule);
+      width: 1px;
+      align-self: stretch;
+    }
+
+    /* ── KICKERS (shared) ── */
+    .kicker {
+      font-family: 'Source Sans 3', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 7px;
+      display: block;
+    }
+
+    /* ── BYLINE (main story only) ── */
+    .byline {
+      font-family: 'Source Sans 3', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--mid);
+      margin-bottom: 14px;
+      display: block;
+    }
+
+    /* ── LEAD STORY ── */
+    .lead-inner {
+      display: grid;
+      grid-template-columns: 1fr 1.1fr;
+      gap: 0 20px;
+      align-items: center;
+    }
+    .lead-photo-wrap { margin: 0; }
+    .lead-photo-box {
+      width: 100%;
+      overflow: hidden;
+      position: relative;
+      cursor: grab;
+      background: #d9d4c7;
+    }
+    .lead-photo-box::before {
+      content: 'Upload photo';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-family: 'Source Serif 4', Georgia, serif;
+      font-size: 18px;
+      color: #999;
+      pointer-events: none;
+    }
+    .lead-photo-box:active { cursor: grabbing; }
+    .lead-photo-box img {
+      width: 100%;
+      height: 420px;
+      object-fit: cover;
+      object-position: center;
+      display: block;
+      filter: sepia(8%) contrast(1.05);
+      pointer-events: none;
+      user-select: none;
+    }
+
+    /* ── DRAG BOXES (bottom photos) ── */
+    .drag-box {
+      width: 100%;
+      height: 200px;
+      min-height: 200px;
+      max-height: 200px;
+      overflow: hidden;
+      position: relative;
+      cursor: grab;
+      margin-bottom: 10px;
+      background: #d9d4c7;
+    }
+    .drag-box::before {
+      content: 'Upload photo';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-family: 'Source Serif 4', Georgia, serif;
+      font-size: 18px;
+      color: #999;
+      pointer-events: none;
+    }
+    .drag-box:active { cursor: grabbing; }
+    .drag-box img {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+      object-position: center 50%;
+      display: block;
+      filter: sepia(8%) contrast(1.05);
+      pointer-events: none;
+      user-select: none;
+    }
+    /* Hide ::before once a real photo is loaded */
+    .drag-box.has-photo::before { display: none; }
+    .lead-photo-box.has-photo::before { display: none; }
+
+    /* ── DRAG HINT ── */
+    .drag-hint {
+      position: absolute;
+      bottom: 6px;
+      right: 8px;
+      font-family: 'Source Sans 3', sans-serif;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #fff;
+      background: rgba(0,0,0,0.45);
+      padding: 3px 7px;
+      border-radius: 2px;
+      opacity: 0;
+      transition: opacity 0.2s;
+      pointer-events: none;
+    }
+    .lead-photo-box .drag-hint,
+    .drag-box .drag-hint { display: block; }
+    .lead-photo-box:hover .drag-hint,
+    .drag-box:hover .drag-hint { opacity: 1; }
+
+    /* ── DROP ZONE HIGHLIGHT ── */
+    .drop-zone.drag-over {
+      outline: 3px dashed var(--accent);
+      outline-offset: -3px;
+    }
+
+    /* ── HEADLINE WARNINGS ── */
+    .hed-warn {
+      font-family: 'Source Sans 3', sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-top: 4px;
+    }
+    .lead-text {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 0 0 0 0;
+    }
+    .lead-story h2 {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: clamp(32px, 3vw, 48px);
+      font-weight: 900;
+      line-height: 1.08;
+      margin: 0 0 0;
+      text-align: center;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .lead-story .deck {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 25px;
+      font-weight: 400;
+      font-style: normal;
+      color: var(--black);
+      line-height: 1.4;
+      margin: 12px 0 0;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      text-align: center;
+    }
+    .story-body {
+      font-family: 'Source Serif 4', Georgia, serif;
+      font-size: 20px;
+      font-weight: 400;
+      font-style: italic;
+      line-height: 1.7;
+      color: var(--ink);
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid #ccc;
+      text-align: center;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .caption {
+      font-family: 'Source Sans 3', sans-serif;
+      font-size: 11px;
+      color: var(--mid);
+      margin-top: 5px;
+      line-height: 1.4;
+      display: block;
+      text-align: right;
+    }
+    .caption strong {
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* ── PHOTO UPLOAD BUTTON ── */
+    .photo-upload-btn {
+      display: block;
+      width: 100%;
+      margin-top: 6px;
+      padding: 6px;
+      background: transparent;
+      border: 1px dashed #aaa;
+      color: #888;
+      font-family: 'Source Sans 3', sans-serif;
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.15s;
+    }
+    .photo-upload-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--edit-highlight); }
+    .photo-file-input { display: none; }
+
+    /* ── SIDEBAR ── */
+    .sidebar { padding-left: var(--col-gap); }
+    .sidebar-story {
+      margin-bottom: 16px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #ccc;
+    }
+    .sidebar-story:last-child { border-bottom: none; }
+    .sidebar-story h3 {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 30px;
+      font-weight: 700;
+      line-height: 1.15;
+      margin-bottom: 0;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    /* ── BOTTOM GRID ── */
+    .bottom-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0 var(--col-gap);
+      margin-top: 24px;
+      padding-top: 20px;
+      border-top: 3px solid var(--rule);
+      align-items: start;
+    }
+    .bottom-story {
+      padding: 0 var(--col-gap);
+      border-right: 1px solid #ccc;
+      display: flex;
+      flex-direction: column;
+    }
+    .bottom-story:first-child { padding-left: 0; }
+    .bottom-story:last-child { border-right: none; padding-right: 0; }
+    .bottom-story h3 {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 26px;
+      font-weight: 700;
+      line-height: 1.2;
+      margin-bottom: 0;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .bottom-story img {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+      display: block;
+      margin-bottom: 10px;
+      filter: sepia(8%) contrast(1.05);
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      border-top: 3px double var(--rule);
+      margin-top: 40px;
+      padding-top: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      font-family: 'Source Sans 3', sans-serif;
+      font-size: 11px;
+      color: var(--light);
+      letter-spacing: 0.06em;
+    }
+    footer nav span {
+      margin-right: 16px;
+      text-transform: uppercase;
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      color: var(--light);
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 768px) {
+      .front-grid { grid-template-columns: 1fr; }
+      .col-divider { display: none; }
+      .sidebar { padding-left: 0; border-top: 3px solid var(--rule); padding-top: 20px; margin-top: 20px; }
+      .bottom-grid { grid-template-columns: 1fr 1fr; }
+      .bottom-story { border-right: none; padding-right: 0; }
+      .bottom-story:nth-child(odd) { border-right: 1px solid #ccc; padding-right: var(--col-gap); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── TOOLBAR ── -->
+<div id="toolbar">
+  <div class="toolbar-left">
+    <span class="label">Penn State Bulletin Editor</span>
+    <button class="btn-save" onclick="saveHTMLFile()">&#8595; Save My Page</button>
+    <button class="btn-reset" onclick="resetPage()">&#8635; Reset to Template</button>
+  </div>
+  <span id="status">Click any text to edit &bull; Click any photo area to upload an image</span>
+</div>
+
+<div class="page">
+
+  <!-- TOP BAR -->
+  <div class="top-bar">
+    <span>Penn State University &mdash; COMM 467</span>
+    <nav>
+      <span>Home</span>
+      <span style="margin-left:18px">Latest News</span>
+      <span style="margin-left:18px">Centre County</span>
+      <span style="margin-left:18px">About</span>
+    </nav>
+  </div>
+
+  <!-- NAMEPLATE -->
+  <div class="nameplate">
+    <h1>The Penn State Bulletin</h1>
+    <p class="tagline">Penn State&rsquo;s Fictional Newspaper of Record &mdash; COMM 467 &mdash; Bellisario College of Communications</p>
+  </div>
+
+  <!-- DATE BAR -->
+  <div class="date-bar">
+    <span>State College, Pa.</span>
+    <span>Wednesday, March 25, 2026</span>
+    <span>Vol. 1, No. 1</span>
+  </div>
+
+  <!-- MAIN FRONT PAGE GRID -->
+  <div class="front-grid">
+
+    <!-- LEAD STORY -->
+    <article class="lead-story">
+      <div class="lead-inner">
+
+        <!-- VERTICAL PHOTO LEFT -->
+        <div class="lead-photo-wrap">
+          <div class="lead-photo-box drop-zone" id="lead-box" data-img="lead-img">
+            <img id="lead-img" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" alt="Lead photo" />
+            <span class="drag-hint">&#8597; Drag to reposition</span>
+          </div>
+          <label class="photo-upload-btn" for="lead-file">&#8593; Upload or Drop Photo</label>
+          <input class="photo-file-input" type="file" id="lead-file" accept="image/*" onchange="loadImage(this,'lead-img')" />
+          <span class="caption" contenteditable="true" spellcheck="true">Photographer Name / Affiliation</span>
+        </div>
+
+        <!-- TEXT RIGHT -->
+        <div class="lead-text">
+          <h2 id="main-hed" contenteditable="true" spellcheck="true">Write Your Main Headline Here — Three Lines</h2>
+          <div id="hed-warning" style="display:none; font-family:'Source Sans 3',sans-serif; font-size:11px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--accent); text-align:center; margin-top:6px;">&#9888; Headline too short — aim for three lines</div>
+          <span class="deck" contenteditable="true" spellcheck="true">Write a deck in sentence format — a line or two that elaborates on the headline.</span>
+          <div class="story-body">
+            <div contenteditable="true" spellcheck="true">Write your lede sentence here — one strong sentence that captures the most newsworthy element of your story.</div>
+          </div>
+        </div>
+
+      </div>
+    </article>
+
+    <!-- COLUMN DIVIDER -->
+    <div class="col-divider"></div>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+
+      <div class="section-label">Latest News</div>
+
+      <div class="sidebar-story">
+        <h3 id="side-hed-1" contenteditable="true" spellcheck="true">Write a Two-Line Headline Here in Title Case</h3>
+        <div class="hed-warn" style="display:none;">&#9888; Headline too short — aim for two lines</div>
+      </div>
+
+      <div class="sidebar-story">
+        <h3 id="side-hed-2" contenteditable="true" spellcheck="true">Write a Two-Line Headline Here in Title Case</h3>
+        <div class="hed-warn" style="display:none;">&#9888; Headline too short — aim for two lines</div>
+      </div>
+
+      <div class="sidebar-story">
+        <h3 id="side-hed-3" contenteditable="true" spellcheck="true">Write a Two-Line Headline Here in Title Case</h3>
+        <div class="hed-warn" style="display:none;">&#9888; Headline too short — aim for two lines</div>
+      </div>
+
+      <div class="sidebar-story">
+        <h3 id="side-hed-4" contenteditable="true" spellcheck="true">Write a Two-Line Headline Here in Title Case</h3>
+        <div class="hed-warn" style="display:none;">&#9888; Headline too short — aim for two lines</div>
+      </div>
+
+    </aside>
+  </div>
+
+  <!-- BOTTOM GRID: kicker + photo + headline only -->
+  <div class="bottom-grid">
+
+    <article class="bottom-story">
+      <div class="drag-box drop-zone" id="bot1-box" data-img="bot1-img">
+        <img id="bot1-img" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" alt="Story photo" />
+        <span class="drag-hint">&#8597; Drag to reposition</span>
+      </div>
+      <label class="photo-upload-btn" for="bot1-file">&#8593; Upload or Drop Photo</label>
+      <input class="photo-file-input" type="file" id="bot1-file" accept="image/*" onchange="loadImage(this,'bot1-img')" />
+      <h3 id="bot-hed-1" contenteditable="true" spellcheck="true">Write a Two-Line Headline Here Using Title Case for All Words</h3>
+      <div class="hed-warn" style="display:none;">&#9888; Headline too short — aim for two lines</div>
+    </article>
+
+    <article class="bottom-story">
+      <div class="drag-box drop-zone" id="bot2-box" data-img="bot2-img">
+        <img id="bot2-img" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" alt="Story photo" />
+        <span class="drag-hint">&#8597; Drag to reposition</span>
+      </div>
+      <label class="photo-upload-btn" for="bot2-file">&#8593; Upload or Drop Photo</label>
+      <input class="photo-file-input" type="file" id="bot2-file" accept="image/*" onchange="loadImage(this,'bot2-img')" />
+      <h3 id="bot-hed-2" contenteditable="true" spellcheck="true">Write a Two-Line Headline Here Using Title Case for All Words</h3>
+      <div class="hed-warn" style="display:none;">&#9888; Headline too short — aim for two lines</div>
+    </article>
+
+    <article class="bottom-story">
+      <div class="drag-box drop-zone" id="bot3-box" data-img="bot3-img">
+        <img id="bot3-img" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" alt="Story photo" />
+        <span class="drag-hint">&#8597; Drag to reposition</span>
+      </div>
+      <label class="photo-upload-btn" for="bot3-file">&#8593; Upload or Drop Photo</label>
+      <input class="photo-file-input" type="file" id="bot3-file" accept="image/*" onchange="loadImage(this,'bot3-img')" />
+      <h3 id="bot-hed-3" contenteditable="true" spellcheck="true">Write a Two-Line Headline Here Using Title Case for All Words</h3>
+      <div class="hed-warn" style="display:none;">&#9888; Headline too short — aim for two lines</div>
+    </article>
+
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <nav>
+      <span>Home</span>
+      <span style="margin-left:16px">Latest News</span>
+      <span style="margin-left:16px">Centre County</span>
+      <span style="margin-left:16px">About</span>
+    </nav>
+    <span>&copy; 2026 The Penn State Bulletin &mdash; Penn State University COMM 467</span>
+  </footer>
+
+</div>
+
+<script>
+  // ── Load image as base64 so it's embedded in the saved file ──
+  function loadImage(input, imgId) {
+    if (input.files && input.files[0]) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const img = document.getElementById(imgId);
+        img.src = e.target.result;
+        const box = img.closest('.drag-box, .lead-photo-box');
+        if (box) box.classList.add('has-photo');
+        autoSave();
+      };
+      reader.readAsDataURL(input.files[0]);
+    }
+  }
+
+  // ── Auto-save to localStorage ──
+  const STORAGE_KEY = 'psbulletin_v1';
+
+  function autoSave() {
+    try {
+      const data = {};
+      document.querySelectorAll('[contenteditable="true"]').forEach((el, i) => {
+        data['el_' + i] = el.innerHTML;
+      });
+      document.querySelectorAll('img[id]').forEach(img => {
+        data['img_' + img.id] = img.src;
+      });
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      document.getElementById('status').textContent = 'Auto-saved \u2713  ' + new Date().toLocaleTimeString();
+    } catch(e) {
+      document.getElementById('status').textContent = 'Storage full \u2014 use Save My Page to download your work.';
+    }
+  }
+
+  function loadContent() {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (!saved) return;
+    try {
+      const data = JSON.parse(saved);
+      document.querySelectorAll('[contenteditable="true"]').forEach((el, i) => {
+        if (data['el_' + i] !== undefined) el.innerHTML = data['el_' + i];
+      });
+      document.querySelectorAll('img[id]').forEach(img => {
+        if (data['img_' + img.id] && !data['img_' + img.id].includes('placehold.co')) {
+          img.src = data['img_' + img.id];
+        }
+      });
+      document.getElementById('status').textContent = 'Restored from last session \u2014 Click any text to edit';
+    } catch(e) {}
+  }
+
+  function resetPage() {
+    if (confirm('Reset all content to the template defaults? This cannot be undone.')) {
+      localStorage.removeItem(STORAGE_KEY);
+      location.reload();
+    }
+  }
+
+  // ── SAVE MY PAGE ──
+  // Serializes the current page — all edits + base64-embedded photos — into
+  // a standalone .html file the student submits. The toolbar and upload buttons
+  // are stripped from the saved copy so you see a clean page.
+  function saveHTMLFile() {
+    // Ask for student name to label the file
+    const name = prompt('Enter your last name for the filename (e.g. "Smith"):');
+    if (name === null) return; // cancelled
+    const filename = name.trim()
+      ? '467chronicle-' + name.trim().replace(/\s+/g, '-').toLowerCase() + '.html'
+      : '467chronicle-submission.html';
+
+    // Clone the full document
+    const clone = document.documentElement.cloneNode(true);
+
+    // Remove toolbar from clone
+    const tb = clone.querySelector('#toolbar');
+    if (tb) tb.remove();
+
+    // Remove upload buttons and file inputs from clone
+    clone.querySelectorAll('.photo-upload-btn').forEach(el => el.remove());
+    clone.querySelectorAll('.photo-file-input').forEach(el => el.remove());
+
+    // Remove the script block from clone so saved file is static
+    clone.querySelectorAll('script').forEach(el => el.remove());
+
+    // Strip contenteditable attributes so the saved file is read-only
+    clone.querySelectorAll('[contenteditable]').forEach(el => el.removeAttribute('contenteditable'));
+
+    // Build final HTML string
+    const html = '<!DOCTYPE html>\n<html lang="en">\n' + clone.innerHTML + '\n</html>';
+
+    // Trigger download
+    const blob = new Blob([html], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    document.getElementById('status').textContent = 'Saved as \u201c' + filename + '\u201d \u2014 submit this file to your instructor.';
+  }
+
+  // ── Headline line-count warnings ──
+  function checkAllHeds() {
+    // Main hed: 3 lines
+    const mainHed = document.getElementById('main-hed');
+    const mainWarn = document.getElementById('hed-warning');
+    if (mainHed && mainWarn) {
+      const lh = parseFloat(getComputedStyle(mainHed).lineHeight);
+      mainWarn.style.display = Math.round(mainHed.offsetHeight / lh) < 3 ? 'block' : 'none';
+    }
+    // All other heds: 2 lines
+    ['side-hed-1','side-hed-2','side-hed-3','side-hed-4','bot-hed-1','bot-hed-2','bot-hed-3'].forEach(function(id) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const warn = el.nextElementSibling;
+      if (!warn || !warn.classList.contains('hed-warn')) return;
+      const lh = parseFloat(getComputedStyle(el).lineHeight);
+      warn.style.display = Math.round(el.offsetHeight / lh) < 2 ? 'block' : 'none';
+    });
+  }
+
+  // ── Drag-and-drop onto photo boxes ──
+  function setupDropZones() {
+    document.querySelectorAll('.drop-zone').forEach(function(zone) {
+      const imgId = zone.dataset.img;
+      if (!imgId) return;
+
+      zone.addEventListener('dragover', function(e) {
+        // Only highlight if dragging a file
+        if (e.dataTransfer.types && (e.dataTransfer.types.includes('Files') || e.dataTransfer.types.includes('application/x-moz-file'))) {
+          e.preventDefault();
+          zone.classList.add('drag-over');
+        }
+      });
+      zone.addEventListener('dragleave', function() {
+        zone.classList.remove('drag-over');
+      });
+      zone.addEventListener('drop', function(e) {
+        e.preventDefault();
+        zone.classList.remove('drag-over');
+        const file = e.dataTransfer.files[0];
+        if (!file || !file.type.startsWith('image/')) return;
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+          const img = document.getElementById(imgId);
+          img.src = ev.target.result;
+          zone.classList.add('has-photo');
+          autoSave();
+        };
+        reader.readAsDataURL(file);
+      });
+    });
+  }
+
+  // ── Auto-save on edits (debounced) ──
+  let saveTimer;
+  document.addEventListener('input', function() {
+    clearTimeout(saveTimer);
+    document.getElementById('status').textContent = 'Saving\u2026';
+    saveTimer = setTimeout(autoSave, 800);
+    checkAllHeds();
+  });
+
+  // ── DRAG TO REPOSITION ──
+  function makeDraggable(boxId, imgId) {
+    const box = document.getElementById(boxId);
+    const img = document.getElementById(imgId);
+    if (!box || !img) return;
+
+    const savedPos = localStorage.getItem('pos_' + imgId);
+    if (savedPos) img.style.objectPosition = savedPos;
+
+    let dragging = false;
+    let startX, startY, startPosX, startPosY;
+
+    function getPosPercent() {
+      const style = img.style.objectPosition || '50% 50%';
+      const parts = style.split(' ');
+      return { x: parseFloat(parts[0]) || 50, y: parseFloat(parts[1]) || 50 };
+    }
+
+    function isPlaceholder() {
+      return img.src.includes('data:image/gif') || img.src.includes('placehold.co');
+    }
+
+    box.addEventListener('mousedown', function(e) {
+      if (isPlaceholder()) return;
+      // Don't intercept if this is a file drag
+      if (e.dataTransfer) return;
+      dragging = true;
+      startX = e.clientX; startY = e.clientY;
+      const pos = getPosPercent();
+      startPosX = pos.x; startPosY = pos.y;
+      e.preventDefault();
+    });
+    document.addEventListener('mousemove', function(e) {
+      if (!dragging) return;
+      const dx = ((e.clientX - startX) / box.offsetWidth) * -100;
+      const dy = ((e.clientY - startY) / box.offsetHeight) * -100;
+      img.style.objectPosition = Math.min(100,Math.max(0,startPosX+dx)).toFixed(1)+'% '+Math.min(100,Math.max(0,startPosY+dy)).toFixed(1)+'%';
+    });
+    document.addEventListener('mouseup', function() {
+      if (!dragging) return;
+      dragging = false;
+      localStorage.setItem('pos_' + imgId, img.style.objectPosition);
+    });
+    box.addEventListener('touchstart', function(e) {
+      if (isPlaceholder()) return;
+      dragging = true;
+      startX = e.touches[0].clientX; startY = e.touches[0].clientY;
+      const pos = getPosPercent();
+      startPosX = pos.x; startPosY = pos.y;
+    }, { passive: true });
+    document.addEventListener('touchmove', function(e) {
+      if (!dragging) return;
+      const dx = ((e.touches[0].clientX - startX) / box.offsetWidth) * -100;
+      const dy = ((e.touches[0].clientY - startY) / box.offsetHeight) * -100;
+      img.style.objectPosition = Math.min(100,Math.max(0,startPosX+dx)).toFixed(1)+'% '+Math.min(100,Math.max(0,startPosY+dy)).toFixed(1)+'%';
+    }, { passive: true });
+    document.addEventListener('touchend', function() {
+      if (!dragging) return;
+      dragging = false;
+      localStorage.setItem('pos_' + imgId, img.style.objectPosition);
+    });
+  }
+
+  window.addEventListener('load', function() {
+    loadContent();
+    checkAllHeds();
+    setupDropZones();
+    makeDraggable('lead-box', 'lead-img');
+    makeDraggable('bot1-box', 'bot1-img');
+    makeDraggable('bot2-box', 'bot2-img');
+    makeDraggable('bot3-box', 'bot3-img');
+  });
+</script>
+
+</body>
+</html>
