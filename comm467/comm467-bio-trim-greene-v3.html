@@ -278,6 +278,7 @@ function resetTimer() {
   document.getElementById("timer-start-btn").className = "timer-btn";
   document.getElementById("timer-select").disabled = false;
   document.getElementById("late-stamp").style.display = "none";
+  clearHighlights();
 }
 
 // ── Highlighting ──────────────────────────────────────────────
@@ -305,12 +306,13 @@ function applyHighlight(type) {
 
 function clearHighlights() {
   const container = document.getElementById("original-text");
-  container.querySelectorAll(".hl-keep, .hl-cut").forEach(span => {
+  const spans = Array.from(container.querySelectorAll(".hl-keep, .hl-cut"));
+  spans.forEach(span => {
     const parent = span.parentNode;
     while (span.firstChild) parent.insertBefore(span.firstChild, span);
     parent.removeChild(span);
-    parent.normalize();
   });
+  container.normalize();
 }
 
 function copyKeepsToForm() {
